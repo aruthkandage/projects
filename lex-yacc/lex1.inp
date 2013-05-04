@@ -1,0 +1,29 @@
+%{
+/* Will be copied verbatim into the generated c file */
+int num_ids;
+int num_nums;
+%}
+
+/* Definitions */
+
+DIGIT 	[0-9]
+ID 	([a-z]|"_")[a-z0-9]*
+
+%%
+print 			printf("PRINT\n");
+
+{DIGIT}+		{ printf("NUMBER\n");
+			  num_nums++; }
+
+[ \t\n\r]+		{ /* Eat whitespace */ }
+
+{ID}			{ printf("ID: %s\n", yytext);
+			  num_ids++; }
+%%
+main()
+	{
+		yyin = stdin;
+		yylex();
+
+		printf("%d NUMs %d IDs\n", num_nums, num_ids);
+	}

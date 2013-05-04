@@ -1,0 +1,47 @@
+/* flex -+ -o lex3.cpp lex3.inp
+   g++ lex3.cpp -o lex3 -lfl */
+
+alpha 		[a-zA-Z]
+alphanum 	[a-zA-Z0-9]
+digit		[0-9]
+whitespace	[ \t\n\r]
+lparen		"("
+rparen		")"
+lbrace		"{"
+rbrace		"}"
+comma		","
+
+%option noyywrap
+%%
+{alpha}{alphanum}*	{ std::cout << "id: " << YYText() << std::endl; }
+{digit}+		{ std::cout << "num" << std::endl; }
+{whitespace}+		{ /* Swallow whitespace */ }
+{lparen}		{ std::cout << "lparen" << std::endl; }
+{rparen}		{ std::cout << "rparen" << std::endl; }
+{lbrace}		{ std::cout << "lbrace" << std::endl; }
+{rbrace}		{ std::cout << "rbrace" << std::endl; }
+{comma}			{ std::cout << "comma" << std::endl; }
+"/*"			{ /* Swallow comments */
+			int c;
+			while(1) {
+				c = yyinput();
+				if(c == 0) {
+					// Error
+				} else if(c == '*') {
+					c = yyinput();
+					if(c == '/') break;
+					else unput(c);
+				}
+			}
+			}
+%%
+int main(int, char**) 
+	{
+	FlexLexer* lexer = new yyFlexLexer(&std::cin, &std::cout);
+	
+	while(lexer->yylex()) {}
+	delete lexer;
+	
+	return 0;
+	}
+

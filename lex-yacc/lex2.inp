@@ -1,0 +1,14 @@
+/* Exclusive start condition */
+%x	COMMENT
+
+%%
+"/*"			BEGIN(COMMENT);
+<COMMENT>[^*]+
+<COMMENT>"*"+[^*/]*
+<COMMENT>"*"+"/"	{ BEGIN(INITIAL); printf("comment\n"); }
+
+%%
+main()
+	{
+		yylex();
+	}
