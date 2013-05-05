@@ -1,0 +1,9 @@
+#!/bin/bash
+
+flex --stdinit -o lexer.c lexer.inp
+yacc -di -o parser.c grammar.inp
+
+echo "extern int yylex(void);" >> parser.i
+echo "extern void yyerror(const char*);" >> parser.i
+
+g++ driver.cpp lexer.c parser.c -o simple

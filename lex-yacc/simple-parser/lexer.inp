@@ -1,0 +1,14 @@
+%{
+#include "parser.h"
+%}
+
+lparen "("
+rparen ")"
+whitespace [ \t\n\r]
+
+%option noyywrap
+%%
+{lparen}	{ return LPAREN; }
+{rparen}	{ return RPAREN; }
+{whitespace}+   { /* Swallow whitespace */ }
+.		{ return -1; }
