@@ -1,0 +1,16 @@
+%{
+#include <iostream>
+#include "tree_nodes.h"
+%}
+
+%token TOKEN_NUM TOKEN_PLUS TOKEN_LPAREN TOKEN_RPAREN
+%start START
+
+%%
+START 		: EXPR { std::cout << $1 << std::endl; }
+EXPR		: TOKEN_NUM  { $$ = num_token_value; }
+EXPR		: BRACKET_EXPR { $$ = $1; }
+EXPR		: LEXPR TOKEN_PLUS EXPR { $$ = $1 + $3; }
+LEXPR		: BRACKET_EXPR { $$ = $1; }
+LEXPR		: TOKEN_NUM { $$ = num_token_value; }
+BRACKET_EXPR 	: TOKEN_LPAREN EXPR TOKEN_RPAREN { $$ = $2; }

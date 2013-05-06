@@ -1,0 +1,21 @@
+%{
+#include <cstdlib>
+#include "parser.h"
+
+int num_token_value;
+%}
+
+digit	[0-9]
+plus	"+"
+lparen 	"("
+rparen	")"
+whitespace [ \t\n\r]
+
+%option noyywrap
+%%
+{digit}+	{ num_token_value = atoi(yytext); return TOKEN_NUM; }
+{lparen}	{ return TOKEN_LPAREN; }
+{rparen}	{ return TOKEN_RPAREN; }
+{plus}		{ return TOKEN_PLUS; }
+{whitespace}+ 	{ /* Swallow whitespace */ }
+.		{ return YYERRCODE; }

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+flex --stdinit -o lexer.c lexer.inp
+yacc -di -o parser.c grammar.inp
+
+echo "extern int yylex(void);" >> parser.i
+echo "extern void yyerror(const char*);" >> parser.i
+echo "extern int num_token_value;" >> parser.i
+
+g++ driver.cpp tree_nodes.cpp lexer.c parser.c -o math

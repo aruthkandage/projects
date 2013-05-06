@@ -1,0 +1,5 @@
+#define TOKEN_NUM 257
+#define TOKEN_PLUS 258
+#define TOKEN_LPAREN 259
+#define TOKEN_RPAREN 260
+#define YYERRCODE 256
