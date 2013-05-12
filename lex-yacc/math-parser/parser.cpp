@@ -139,62 +139,97 @@ static const char *yyrule[] = {
 #include <cstring>	/* needed for memset */
 
 /* Constructor */
-math_parser::math_parser() : yystack(), yyval(), yylval(), lexer(new yyFlexLexer(&yylval, &std::cin, &std::cout)), root(0) {}
+math_parser::math_parser(std::istream *in) : input(in), yystack(), yyval(), yylval(), lexer(new yyFlexLexer(&yylval, input, &std::cout)), root(0), ready(0) {
+	ready = 1;
+}
 
 /* Destructor */
 math_parser::~math_parser() {
 	delete lexer;
 	delete root;
 	
-	free(yystack.l_base); 
+	yyfreestack(); 
 }
 
 tree_node* math_parser::get_parse_tree() {
 	return root;
 }
 
+/* Reset the parser to parse again if necessary */
+void math_parser::ready_parser() {
+	if(!ready) {
+		if(root != 0) {
+			delete root;
+			root = 0;
+		}
+		
+		memset(&yystack, 0, sizeof(yystack));
+		memset(&yyval, 0, sizeof(yyval));
+		memset(&yylval, 0, sizeof(yyval));
+	
+		lexer->yyrestart(input);
+	
+		ready = 1;
+	}
+}
+
+void math_parser::ready_parser(std::istream* in) {
+	input = in;
+	ready = 0;
+
+	ready_parser();
+}
+
+void math_parser::done_parse() {
+	yyfreestack();
+
+	ready = 0;
+}
+
 /* Do nothing with errors */
 void math_parser::yyerror(const char*) {}
 
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
-int math_parser::yygrowstack(YYSTACKDATA *data)
+int math_parser::yygrowstack()
 {
     int i;
     unsigned newsize;
     short *newss;
     YYSTYPE *newvs;
 
-    if ((newsize = data->stacksize) == 0)
+    if ((newsize = yystack.stacksize) == 0)
         newsize = YYINITSTACKSIZE;
     else if (newsize >= YYMAXDEPTH)
         return -1;
     else if ((newsize *= 2) > YYMAXDEPTH)
         newsize = YYMAXDEPTH;
 
-    i = data->s_mark - data->s_base;
-    newss = (short *)realloc(data->s_base, newsize * sizeof(*newss));
+    i = yystack.s_mark - yystack.s_base;
+    newss = (short *)realloc(yystack.s_base, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;
 
-    data->s_base = newss;
-    data->s_mark = newss + i;
+    yystack.s_base = newss;
+    yystack.s_mark = newss + i;
 
-    newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
+    newvs = (YYSTYPE *)realloc(yystack.l_base, newsize * sizeof(*newvs));
     if (newvs == 0)
         return -1;
 
-    data->l_base = newvs;
-    data->l_mark = newvs + i;
+    yystack.l_base = newvs;
+    yystack.l_mark = newvs + i;
 
-    data->stacksize = newsize;
-    data->s_last = data->s_base + newsize - 1;
+    yystack.stacksize = newsize;
+    yystack.s_last = yystack.s_base + newsize - 1;
     return 0;
 }
 
-void math_parser::yyfreestack(YYSTACKDATA *data)
+void math_parser::yyfreestack()
 {
-    free(data->s_base);
-    memset(data, 0, sizeof(*data));
+   	if(yystack.l_base != 0) free(yystack.l_base);
+    	if(yystack.s_base != 0) free(yystack.s_base);
+    
+   	memset(&yystack, 0, sizeof(yystack));
 }
 
 #define YYABORT  goto yyabort
@@ -221,9 +256,9 @@ int math_parser::parse()
     yychar = YYEMPTY;
     yystate = 0;
 
-    memset(&yystack, 0, sizeof(yystack));
+    ready_parser();
 
-    if (yystack.s_base == NULL && yygrowstack(&yystack)) goto yyoverflow;
+    if (yystack.s_base == NULL && yygrowstack()) goto yyoverflow;
     yystack.s_mark = yystack.s_base;
     yystack.l_mark = yystack.l_base;
     yystate = 0;
@@ -233,7 +268,9 @@ yyloop:
     if ((yyn = yydefred[yystate]) != 0) goto yyreduce;
     if (yychar < 0)
     {
-        if ((yychar = lexer->yylex()) < 0) yychar = 0;
+        if ((yychar = lexer->yylex()) < 0) {
+		// Nothing
+	}
 #if YYDEBUG
         if (yydebug)
         {
@@ -253,7 +290,7 @@ yyloop:
             printf("%sdebug: state %d, shifting to state %d\n",
                     YYPREFIX, yystate, yytable[yyn]);
 #endif
-        if (yystack.s_mark >= yystack.s_last && yygrowstack(&yystack))
+        if (yystack.s_mark >= yystack.s_last && yygrowstack())
         {
             goto yyoverflow;
         }
@@ -293,7 +330,7 @@ yyinrecovery:
                     printf("%sdebug: state %d, error recovery shifting\
  to state %d\n", YYPREFIX, *yystack.s_mark, yytable[yyn]);
 #endif
-                if (yystack.s_mark >= yystack.s_last && yygrowstack(&yystack))
+                if (yystack.s_mark >= yystack.s_last && yygrowstack())
                 {
                     goto yyoverflow;
                 }
@@ -419,7 +456,7 @@ break;
         printf("%sdebug: after reduction, shifting from state %d \
 to state %d\n", YYPREFIX, *yystack.s_mark, yystate);
 #endif
-    if (yystack.s_mark >= yystack.s_last && yygrowstack(&yystack))
+    if (yystack.s_mark >= yystack.s_last && yygrowstack())
     {
         goto yyoverflow;
     }
@@ -431,10 +468,10 @@ yyoverflow:
     yyerror("yacc stack overflow");
 
 yyabort:
-    yyfreestack(&yystack);
+    done_parse();
     return (1);
 
 yyaccept:
-    yyfreestack(&yystack);
+    done_parse();
     return (0);
 }
