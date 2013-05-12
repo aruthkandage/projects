@@ -1,16 +1,18 @@
 #include <iostream>
 
-/* Parser interface */
-#include "parser.i"
 #include "tree_nodes.h"
+#include "parser.h"
 
 using namespace std;
 
-void yyerror(const char* err) {
-	cerr << err << endl;
-}
-
 int main(int, char**) {
-	cout << yyparse() << endl;
+	math_parser* parser = new math_parser;
+
+	parser->parse();
+
+	cout << parser->get_parse_tree()->evaluate() << endl;
+
+	delete parser;
+
 	return 0;
 }

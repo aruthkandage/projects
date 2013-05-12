@@ -1,16 +1,24 @@
 %{
-#include <iostream>
 #include "tree_nodes.h"
+#include "parser.h"
 %}
 
-%token TOKEN_NUM TOKEN_PLUS TOKEN_LPAREN TOKEN_RPAREN
+%union {
+	tree_node* node;
+	int value;
+}
+
+%token <value> TOKEN_NUM 
+%token TOKEN_PLUS TOKEN_LPAREN TOKEN_RPAREN
 %start START
 
+%type <node> START EXPR LEXPR BRACKET_EXPR
+
 %%
-START 		: EXPR { std::cout << $1 << std::endl; }
-EXPR		: TOKEN_NUM  { $$ = num_token_value; }
+START 		: EXPR { $$ = $1; }
+EXPR		: TOKEN_NUM  { $$ = new tree_node_num($1); }
 EXPR		: BRACKET_EXPR { $$ = $1; }
-EXPR		: LEXPR TOKEN_PLUS EXPR { $$ = $1 + $3; }
-LEXPR		: BRACKET_EXPR { $$ = $1; }
-LEXPR		: TOKEN_NUM { $$ = num_token_value; }
-BRACKET_EXPR 	: TOKEN_LPAREN EXPR TOKEN_RPAREN { $$ = $2; }
+EXPR		: LEXPR TOKEN_PLUS EXPR { $$ = new tree_node_add($1,$3); }
+LEXPR		: BRACKET_EXPR { $$ = $1;}
+LEXPR		: TOKEN_NUM { $$ = new tree_node_num($1); }
+BRACKET_EXPR 	: TOKEN_LPAREN EXPR TOKEN_RPAREN { $$ = new tree_node_brack($2); }

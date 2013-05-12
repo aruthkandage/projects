@@ -1,5 +1,61 @@
+#ifndef _PARSER_H_
+#define _PARSER_H_
+
 #define TOKEN_NUM 257
 #define TOKEN_PLUS 258
 #define TOKEN_LPAREN 259
 #define TOKEN_RPAREN 260
-#define YYERRCODE 256
+#define YYERRCODE -1
+
+#include <iostream>
+#include "tree_nodes.h"
+
+typedef union {
+	tree_node* node;
+	int value;
+} YYSTYPE;
+
+/* define the initial stack-sizes */
+#define YYSTACKSIZE 500
+#define YYMAXDEPTH  500
+#define YYINITSTACKSIZE 500
+
+struct YYSTACKDATA {
+    unsigned stacksize;
+    short    *s_base;
+    short    *s_mark;
+    short    *s_last;
+    YYSTYPE  *l_base;
+    YYSTYPE  *l_mark;
+};
+
+class yyFlexLexer;
+
+// Parser class
+class math_parser {
+	private:
+	struct YYSTACKDATA yystack;
+	int      yydebug;
+	int      yynerrs;
+
+	int      yyerrflag;
+	int      yychar;
+	YYSTYPE  yyval;
+	YYSTYPE  yylval;
+	
+	yyFlexLexer* lexer;
+	tree_node* root;
+
+	protected:
+	void yyerror(const char*);
+	int yygrowstack(YYSTACKDATA *data);
+	void yyfreestack(YYSTACKDATA *data);
+	public:
+	math_parser();
+	virtual ~math_parser();
+
+	int parse();
+	tree_node* get_parse_tree();	
+};
+
+#endif
